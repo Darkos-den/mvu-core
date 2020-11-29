@@ -12,7 +12,7 @@ val repository = "MVU"
 
 val artifactName = "core"
 val artifactGroup = "com.$organization.$repository"
-val artifactVersion = "0.0.1"
+val artifactVersion = "0.0.2"
 
 group = artifactGroup
 version = artifactVersion
@@ -50,7 +50,9 @@ kotlin {
     }
     ios {
         binaries {
-            framework()
+            framework {
+                baseName = artifactName
+            }
         }
     }
     sourceSets {
