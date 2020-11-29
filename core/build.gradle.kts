@@ -12,7 +12,7 @@ val repository = "MVU"
 
 val artifactName = "core"
 val artifactGroup = "com.$organization.$repository"
-val artifactVersion = "0.0.2"
+val artifactVersion = "0.0.5"
 
 group = artifactGroup
 version = artifactVersion
@@ -41,7 +41,6 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2")
 }
 
 kotlin {
@@ -62,11 +61,7 @@ kotlin {
             }
         }
         val androidMain by getting
-        val iosMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:1.3.8")
-            }
-        }
+        val iosMain by getting
     }
 }
 
@@ -98,6 +93,30 @@ bintray {
             name = artifactVersion
             released = Date().toString()
             vcsTag = artifactVersion
+        }
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("metadata"){
+            artifactId = artifactName
+            groupId = artifactGroup
+
+            from(components.getByName("kotlin"))
+
+            pom {
+                name.set("core")
+                description.set("description")
+                url.set("https://github.com/Darkos-den/mvu-core")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+
+            }
         }
     }
 }
