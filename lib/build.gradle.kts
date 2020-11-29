@@ -68,6 +68,20 @@ kotlin {
     }
 }
 
+afterEvaluate {
+    publishing.publications.all {
+            if(this is MavenPublication){
+                groupId = artifactGroup
+
+                artifactId = when(name){
+                    "metadata" -> artifactName
+                    "androidRelease" -> "$artifactName-android"
+                    else -> "$artifactName-$name"
+                }
+            }
+        }
+}
+
 bintray {
     user = project.property("bintrayUser").toString()
     key = project.property("bintrayApiKey").toString()
@@ -88,18 +102,6 @@ bintray {
 
 tasks.getByName<com.jfrog.bintray.gradle.tasks.BintrayUploadTask>("bintrayUpload"){
     doFirst {
-        publishing.publications.all {
-            if(this is MavenPublication){
-                groupId = artifactGroup
-
-                artifactId = when(name){
-                    "metadata" -> artifactName
-                    "androidRelease" -> "$artifactName-android"
-                    else -> "$artifactName-$name"
-                }
-            }
-        }
-
         publishing.publications.asMap.keys
             .filter { it != "kotlinMultiplatform" }
             .toTypedArray()
