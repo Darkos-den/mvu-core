@@ -1,8 +1,8 @@
 import java.util.Date
 
 plugins {
-    kotlin("multiplatform")
     id("com.android.library")
+    kotlin("multiplatform")
     id("base")
     id("maven-publish")
     id("com.jfrog.bintray")
@@ -24,9 +24,34 @@ repositories {
     jcenter()
     mavenCentral()
 }
+
+publishing {
+    publications.all {
+        if(this is MavenPublication){
+            groupId = artifactGroup
+            artifactId = if(name.contains("metadata")) artifactName else "$artifactName-$name"
+        }
+    }
+}
+
+android {
+    val sdkMin = 23
+    val sdkCompile = 30
+
+    compileSdkVersion(sdkCompile)
+    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    sourceSets["main"].java.srcDirs("src/androidMain/kotlin")
+    defaultConfig {
+        minSdkVersion(sdkMin)
+        targetSdkVersion(sdkCompile)
+        versionCode = 1
+        versionName = "1.0"
+    }
+}
+
 kotlin {
     android {
-        publishAllLibraryVariants()
+        publishLibraryVariants("release")
     }
     ios {
         binaries {
@@ -53,31 +78,18 @@ kotlin {
         }
     }
 }
-android {
-    val sdkMin = 23
-    val sdkCompile = 30
-
-    compileSdkVersion(sdkCompile)
-    sourceSets["main"].setRoot("src/androidMain")
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].java.srcDirs("src/androidMain/kotlin")
-    defaultConfig {
-        minSdkVersion(sdkMin)
-        targetSdkVersion(sdkCompile)
-        versionCode = 1
-        versionName = "1.0"
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-}
 
 bintray {
-    user = project.findProperty("bintrayUser").toString()
-    key = project.findProperty("bintrayKey").toString()
+    user = project.property("bintrayUser").toString()
+    key = project.property("bintrayApiKey").toString()
     publish = false
+
+    publishing.publications.asMap.keys
+        .filter { it != "kotlinMultiplatform" }
+        .toTypedArray()
+        .let {
+            setPublications(*it)
+        }
 
     pkg.apply {
         repo = repository
@@ -91,3 +103,5 @@ bintray {
         }
     }
 }
+
+tasks.getByName("bintrayUpload").dependsOn(tasks.getByName("publishToMavenLocal").path)
