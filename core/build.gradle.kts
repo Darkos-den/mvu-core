@@ -1,10 +1,10 @@
-import java.util.Date
+import org.jetbrains.kotlin.konan.properties.loadProperties
+import kotlin.io.println
 
 plugins {
     id("com.android.library")
     kotlin("multiplatform")
-    id("maven-publish")
-    id("com.jfrog.bintray")
+    `maven-publish`
 }
 
 val organization = "darkosinc"
@@ -12,7 +12,7 @@ val repository = "MVU"
 
 val artifactName = "core"
 val artifactGroup = "com.$organization.$repository"
-val artifactVersion = "0.0.6"
+val artifactVersion = "0.0.8"
 
 group = artifactGroup
 version = artifactVersion
@@ -45,7 +45,7 @@ dependencies {
 
 kotlin {
     android("android") {
-        publishLibraryVariants("release")
+        publishAllLibraryVariants()
     }
     ios {
         binaries {
@@ -65,71 +65,48 @@ kotlin {
     }
 }
 
-afterEvaluate {
-    publishing.publications.all {
-            if(this is MavenPublication){
-                groupId = artifactGroup
-
-                artifactId = when(name){
-                    "metadata" -> artifactName
-                    "androidRelease" -> "$artifactName-android"
-                    else -> "$artifactName-$name"
-                }
-            }
-        }
-}
-
-bintray {
-    user = project.property("bintrayUser").toString()
-    key = project.property("bintrayApiKey").toString()
-    publish = false
-
-    pkg.apply {
-        repo = repository
-        name = artifactName
-        userOrg = organization
-
-        version.apply {
-            name = artifactVersion
-            released = Date().toString()
-            vcsTag = artifactVersion
-        }
-    }
-}
+val localPropsFile: File = project.rootProject.file("local.properties")
+val localProperties = loadProperties(localPropsFile.absolutePath)
 
 publishing {
-    publications {
-        create<MavenPublication>("metadata"){
-            artifactId = artifactName
-            groupId = artifactGroup
+    val vcs = "https://github.com/Darkos-den/mvu-core"
 
-            from(components.getByName("kotlin"))
+    publications.filterIsInstance<MavenPublication>().forEach { publication ->
+        println(publication.name)
 
-            pom {
-                name.set("core")
-                description.set("description")
-                url.set("https://github.com/Darkos-den/mvu-core")
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
+        publication.pom {
+            name.set(artifactName)
+            description.set(project.description)
+            url.set(vcs)
+
+            licenses {
+                license {
+                    name.set("The Apache Software License, Version 2.0")
+                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    distribution.set("repo")
                 }
-
+            }
+            scm {
+                url.set(vcs)
+                tag.set(project.version.toString())
             }
         }
     }
-}
 
-tasks.getByName<com.jfrog.bintray.gradle.tasks.BintrayUploadTask>("bintrayUpload"){
-    doFirst {
-        publishing.publications.asMap.keys
-            .filter { it != "kotlinMultiplatform" }
-            .toTypedArray()
-            .let {
-                setPublications(*it)
+    val bintrayUser: String? by localProperties
+    val bintrayApiKey: String? by localProperties
+
+    if (bintrayUser != null && bintrayApiKey != null) {
+        repositories {
+            maven {
+                name = "bintray"
+                url =
+                    uri("https://api.bintray.com/maven/darkosinc/$repository/$artifactName/;publish=1;override=1")
+                credentials {
+                    username = bintrayUser
+                    password = bintrayApiKey
+                }
             }
-    }
+        }
+    } else throw IllegalStateException("bintray data not found")
 }
-
-tasks.getByName("bintrayUpload").dependsOn(tasks.getByName("publishToMavenLocal").path)
