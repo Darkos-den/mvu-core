@@ -1,3 +1,3 @@
 package com.darkos.mvu.model.flow
 
-interface FlowEffect
+interface FinalMessage

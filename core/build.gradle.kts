@@ -12,7 +12,7 @@ val repository = "MVU"
 
 val artifactName = "core"
 val artifactGroup = "com.$organization.$repository"
-val artifactVersion = "0.0.9"
+val artifactVersion = "0.1.0"
 
 group = artifactGroup
 version = artifactVersion
