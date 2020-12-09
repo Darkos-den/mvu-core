@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface EffectHandler {
     suspend fun call(effect: Effect): Message
-    suspend fun<T> call(effect: T) : Flow<Message> where
+    suspend fun<T> callAsFlow(effect: T) : Flow<Message> where
             T: Effect,
             T: FlowEffect
 }
