@@ -11,3 +11,10 @@ interface EffectHandler {
             T: Effect,
             T: FlowEffect
 }
+
+interface NotFlowableEffectHandler: EffectHandler {
+
+    override suspend fun <T> callAsFlow(effect: T): Flow<Message> where T : Effect, T : FlowEffect {
+        throw UnsupportedOperationException()
+    }
+}
